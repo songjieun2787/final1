@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>HYLM - Chapter 1 : 당신은 누구?</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Noto Sans KR", system-ui, sans-serif;
+    }
+
+    body {
+      width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+      background: #000;
+      color: #f7f2ff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ===== 전체 게임 영역 (16:9) ===== */
+    .game-container {
+      width: 1278px;
+      height: 798px; 
+      border-radius: 16px;
+      padding: 20px;
+      background: #000;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.7);
+      position: relative;
+      overflow: hidden;
+
+ position: fixed;       /* 화면 고정 */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%)
+
+
+    }
+
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 5;
+    }
+
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .game-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .chapter-label {
+      font-size: 13px;
+      opacity: 0.7;
+    }
+
+    .phase-label {
+      font-size: 12px;
+      opacity: 0.8;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(233, 213, 255, 0.6);
+      background: rgba(24, 24, 35, 0.9);
+    }
+
+    .game-main {
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 16px 18px;
+      height: calc(100% - 60px);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    /* ===== PNG 레이어 ===== */
+    #bg {
+      position: absolute;
+      inset: 0;
+      background: center/100% 100% no-repeat url("bg_room.png");
+      z-index: 0;
+    }
+
+    #frame {
+      position: absolute;
+      inset: -1px;
+      background: center/contain no-repeat url("ui_frame.png");
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .scene,
+    .memory-flare {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* 공통 버튼 */
+    .btn {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(10, 8, 20, 0.9);
+      color: #faf5ff;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.16s ease-out;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 0 12px rgba(224, 180, 255, 0.35);
+      border-color: rgba(233, 213, 255, 0.8);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    /* ===== 루아 캐릭터 PNG ===== */
+    .character-area {
+      height: 340px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .lua-img {
+      width: 1000px;
+      height: auto;
+      image-rendering: crisp-edges;
+      filter: drop-shadow(0 0 22px rgba(186, 142, 255, 0.7));
+      transform: translateY(250px);
+
+      /* ⭐ 루아를 대사창보다 뒤 레이어로 */
+      position: relative;
+      z-index: 3;
+    }
+
+    .lua-img.glow {
+      filter: drop-shadow(0 0 22px rgba(186, 142, 255, 0.7));
+    }
+
+    /* ===== 대사 영역 (ui_dialogue.png) ===== */
+    .dialogue-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .dialogue-box {
+      margin-top: auto;
+      border-radius: 12px;
+      border: none;
+      background: center bottom/60% 100% no-repeat url("ui_dialogue.png");
+      padding: 24px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+
+      /* ⭐ 대사창을 가장 위로 */
+      position: relative;
+      z-index: 10;
+    }
+    #scene-explore .dialogue-box {
+  background: center bottom/100% 100% no-repeat url("ui_dialogue.png");
+}
+
+    .dialogue-header-line {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .speaker {
+      font-weight: 600;
+      font-size: 13px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(196, 181, 253, 0.5);
+      margin-right: 4px;
+      white-space: nowrap;
+    }
+
+    .dialogue-text {
+      font-size: 14px;
+      line-height: 1.6;
+      opacity: 0.95;
+      text-align: center;
+    }
+
+    .dialogue-controls {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 10px;
+
+      /* ⭐ 버튼도 대사창 위에 */
+      position: relative;
+      z-index: 10;
+    }
+
+    /* ---- 이하 동일 ---- */
+
+
+    .dialogue-right {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ===== 플레이어 선택지 (ui_choice.png) ===== */
+    .choice-container {
+      margin-top: 4px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .choice-container.hidden {
+      display: none;
+    }
+
+    .choice-btn {
+      border: none;
+      background: center/contain no-repeat url("ui_choice.png");
+      color: #fff;
+      padding: 10px 24px;
+      min-width: 230px;
+      font-size: 13px;
+      cursor: pointer;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .choice-btn:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
+    /* ===== 탐색 레이아웃 ===== */
+    .explore-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 12px;
+      height: 100%;
+    }
+
+    .room-area {
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(0, 0, 0, 0.3);
+      position: relative;
+      padding: 10px;
+      overflow: hidden;
+    }
+
+    .room-label {
+      font-size: 13px;
+      opacity: 0.7;
+      margin-bottom: 4px;
+    }
+
+    .room-objects {
+      position: relative;
+      height: 260px;
+      border-radius: 10px;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    .object-btn {
+      position: absolute;
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(15, 14, 34, 0.86);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.16s ease-out;
+    }
+
+    .object-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 12px rgba(233, 213, 255, 0.5);
+    }
+
+    .object-btn span {
+      opacity: 0.84;
+    }
+
+    .object-btn.visited {
+      opacity: 0.4;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .object-bookshelf {
+      left: 10%;
+      bottom: 22%;
+    }
+
+    .object-desk {
+      left: 42%;
+      bottom: 12%;
+    }
+
+    .object-shelf {
+      right: 8%;
+      bottom: 26%;
+    }
+
+    .candles-glow {
+      position: absolute;
+      bottom: 4%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 40px;
+      background: radial-gradient(circle at 50% 0, rgba(254, 249, 195, 0.9), transparent 70%);
+      filter: blur(2px);
+      opacity: 0.7;
+      animation: candlePulse 3s ease-in-out infinite;
+    }
+
+    @keyframes candlePulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 0.9; }
+    }
+
+    .log-and-inventory {
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.55);
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      opacity: 0.85;
+    }
+
+    .log-box {
+      flex: 1;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      padding: 8px 9px;
+      font-size: 12px;
+      line-height: 1.6;
+      background: rgba(15, 23, 42, 0.85);
+      overflow-y: auto;
+      max-height: 130px;
+      margin-top: 4px;
+    }
+
+    .log-box.closed {
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-width: 0;
+      overflow: hidden;
+    }
+
+    .log-entry + .log-entry {
+      margin-top: 4px;
+    }
+
+    /* ===== Memory / 인벤토리 패널 (ui_memory.png) ===== */
+    .inventory-box {
+      border-radius: 8px;
+      border: 1px solid rgba(196, 181, 253, 0.6);
+      padding: 18px 24px;
+      background: center/cover no-repeat url("ui_memory.png");
+      font-size: 12px;
+    }
+
+    .inventory-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.9;
+      margin-bottom: 8px;
+    }
+
+    .cards-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .card-small {
+      padding: 4px 6px;
+      border-radius: 6px;
+      border: 1px solid rgba(233, 213, 255, 0.9);
+      font-size: 11px;
+      background: center/contain no-repeat url("ui_choice.png");
+      color: #f9f5ff;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .inventory-footer {
+      margin-top: 8px;
+      font-size: 11px;
+      opacity: 0.9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ===== 카드 팝업 ===== */
+    .card-popup {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, rgba(30, 64, 175, 0.3), rgba(10, 10, 25, 0.92));
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease-out;
+      z-index: 6;
+    }
+
+    .card-popup.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .card-popup-inner {
+      padding: 18px 22px;
+      border-radius: 12px;
+      border: 1px solid rgba(233, 213, 255, 0.9);
+      background: radial-gradient(circle at top, rgba(59, 7, 100, 0.95), rgba(15, 23, 42, 0.98));
+      box-shadow:
+        0 0 40px rgba(216, 180, 254, 0.9),
+        0 0 80px rgba(251, 113, 133, 0.6);
+      text-align: center;
+      animation: cardPop 0.33s ease-out;
+    }
+
+    @keyframes cardPop {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .card-name {
+      font-size: 13px;
+      opacity: 0.8;
+    }
+
+    .card-word {
+      font-size: 22px;
+      font-weight: 700;
+      margin-top: 4px;
+      letter-spacing: 0.12em;
+    }
+
+    .popup-hint {
+      margin-top: 6px;
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    /* ===== 퍼즐 레이아웃 ===== */
+    .puzzle-layout {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 14px;
+      height: 100%;
+    }
+
+    .puzzle-sentence {
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      padding: 14px;
+      background: rgba(15,23,42,0.92);
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    .slot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 72px;
+      min-height: 28px;
+      padding: 2px 4px;
+      margin: 0 2px;
+      border-radius: 6px;
+      border: 1px dashed rgba(148, 163, 184, 0.9);
+      background: rgba(15,23,42,0.7);
+      font-size: 15px;
+      transition: all 0.12s ease-out;
+    }
+
+    .slot.active {
+      border-style: solid;
+      border-color: rgba(196, 181, 253, 1);
+      box-shadow: 0 0 14px rgba(196, 181, 253, 0.9);
+      transform: translateY(-1px);
+    }
+
+    .slot.correct {
+      border-style: solid;
+      border-color: rgba(74, 222, 128, 1);
+      box-shadow: 0 0 10px rgba(74, 222, 128, 0.9);
+    }
+
+    .puzzle-sidebar {
+      border-radius: 10px;
+      border: 1px solid rgba(233, 213, 255, 0.6);
+      padding: 10px;
+      background: radial-gradient(circle at top, rgba(88,28,135,0.9), rgba(24,24,27,0.96));
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .draggable-card {
+      margin: 4px 0;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(233, 213, 255, 0.9);
+      background: center/contain.no-repeat url("ui_choice.png");
+      font-size: 13px;
+      letter-spacing: 0.18em;
+      text-align: center;
+      cursor: grab;
+      user-select: none;
+      color: #f9f5ff;
+    }
+
+    .draggable-card.dragging {
+      opacity: 0.6;
+    }
+
+    .draggable-card.disabled {
+      opacity: 0.4;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .puzzle-message {
+      font-size: 12px;
+      min-height: 30px;
+      opacity: 0.9;
+    }
+
+    /* ===== 기억 연출 ===== */
+    .memory-flare {
+      position: absolute;
+      inset: -20%;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at center, rgba(254, 249, 195, 0.2), transparent 60%),
+        radial-gradient(circle at top, rgba(248, 250, 252, 0.15), transparent 70%);
+      opacity: 0;
+      mix-blend-mode: screen;
+      transition: opacity 0.3s ease-out;
+      z-index: 4;
+    }
+
+    .memory-flare.on {
+      opacity: 1;
+      animation: memoryPulse 1.6s ease-out.forwards;
+    }
+
+    @keyframes memoryPulse {
+      0% { opacity: 1; transform: scale(1); }
+      70% { opacity: 1; transform: scale(1.1); }
+      100% { opacity: 0; transform: scale(1.2); }
+    }
+
+    /* ===== 향기 파티클 (노란 이펙트) 완전 비활성화 ===== */
+    .scent-particles,
+    .scent-particles.on {
+      display: none !important;
+    }
+
+    /* ===== 엔딩 텍스트 ===== */
+    .ending-text {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+      font-size: 15px;
+      line-height: 1.9;
+      text-align: center;
+    }
+
+    .ending-highlight {
+      color: #f9a8d4;
+      font-weight: 600;
+    }
+
+    .tagline {
+      font-size: 12px;
+      opacity: 0.8;
+      margin-top: 6px;
+    }
+
+    .scene {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      animation: fadeIn 0.28s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== 엔딩 씬에서 캐릭터가 텍스트를 가리지 않도록 별도 조정 ===== */
+#scene-ending .lua-img {
+  z-index: 0;              /* 엔딩에서는 텍스트보다 뒤로 */
+}
+
+#scene-ending .ending-text {
+  position: relative;
+  z-index: 5;    
+  transform: translateY(-250px);          /* 캐릭터보다 위로 */
+
+   background: rgba(0, 0, 0, 0.8);  /* ← 반투명 네모박스 */
+  padding: 5px 5px;             /* 박스 안 여백 */
+  border-radius: 5px;  
+   padding: 4px 4px;          /* 부드러운 둥근 모서리 */
+
+  transform: translateY(-250px);    /* 필요하면 위치 조정 */
+}
+}
+
+
+    @media (max-width: 900px) {
+      .game-container {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+      }
+      .game-main {
+        height: calc(100vh - 60px);
+      }
+      .explore-layout,
+      .puzzle-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="game-container">
+  <div class="game-header">
+    <div class="header-left">
+      <div class="game-title">Witch's Lost Memory</div>
+      <div class="chapter-label">CHAPTER 1 — “당신은 누구?”</div>
+    </div>
+    <div class="phase-label" id="phaseLabel">PHASE : 도입</div>
+  </div>
+
+  <div class="game-main">
+    <!-- PNG 배경 / 프레임 -->
+    <div id="bg"></div>
+    <div id="frame"></div>
+
+    <!-- 공통 메모리 플레어 -->
+    <div class="memory-flare" id="memoryFlare"></div>
+
+    <!-- ===== 도입 씬 ===== -->
+    <section id="scene-intro" class="scene">
+      <div class="character-area">
+        <img id="luaMain" class="lua-img" src="lua_neutral.png" alt="루아" />
+      </div>
+
+      <div class="dialogue-area">
+        <div class="dialogue-box">
+          <div class="dialogue-header-line">
+            <div class="speaker" id="introSpeaker">마녀</div>
+            <div class="dialogue-text" id="introText"></div>
+          </div>
+
+          <!-- 플레이어 선택지 -->
+          <div class="choice-container hidden" id="choiceContainer">
+            <button class="choice-btn" data-choice="help">
+              “기억을 되찾을 수 있게 도와줄게.”
+            </button>
+            <button class="choice-btn" data-choice="slow">
+              “천천히 알아가면 되죠.”
+            </button>
+          </div>
+        </div>
+
+        <div class="dialogue-controls">
+          <button class="btn" id="introSkipBtn">도입 스킵</button>
+          <div class="dialogue-right">
+            <button class="btn" id="introNextBtn">다음</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 탐색 씬 ===== -->
+    <section id="scene-explore" class="scene hidden">
+      <div class="explore-layout">
+        <div class="room-area">
+          <div class="room-label">??의 작업실</div>
+          <div class="room-objects">
+            <button class="object-btn object-bookshelf" data-type="magic">
+              <span>책장 (주문서)</span>
+            </button>
+            <button class="object-btn object-desk" data-type="drug">
+              <span>책상 (비커/조제도구)</span>
+            </button>
+            <button class="object-btn object-shelf" data-type="scent">
+              <span>선반 (향료 &amp; 말린 꽃)</span>
+            </button>
+            <div class="candles-glow"></div>
+            <div class="scent-particles" id="scentParticles"></div>
+          </div>
+        </div>
+        <div class="log-and-inventory">
+          <div class="log-header">
+            <span>관찰 기록</span>
+            <button class="btn" id="logToggleBtn" style="padding:3px 10px; font-size:11px;">로그 접기</button>
+          </div>
+          <div class="log-box" id="logBox">
+            <div class="log-entry">
+              촛불과 그림자로 가득한 작업실이다. 어딘가 익숙한 향기가 스며 있다.
+            </div>
+          </div>
+          <div class="inventory-box">
+            <div class="inventory-label">단서 카드</div>
+            <div class="cards-row" id="inventoryCards"></div>
+            <div class="inventory-footer">
+              <span id="inventoryCount">0 / 3</span>
+              <button class="btn" id="toPuzzleBtn" disabled>퍼즐로 이동</button>
+            </div>
+          </div>
+          <div class="dialogue-box">
+            <div class="dialogue-header-line">
+              <div class="speaker">??</div>
+              <div class="dialogue-text" id="exploreDialogue">
+                “이 방도 저와 관련 있겠죠, 하지만 아무것도 기억이 안 나요 같이 좀 봐줄래요?”
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 카드 팝업 ===== -->
+    <div class="card-popup" id="cardPopup">
+      <div class="card-popup-inner">
+        <div class="card-name" id="cardPopupName">기억 조각 획득</div>
+        <div class="card-word" id="cardPopupWord">마법</div>
+        <div class="popup-hint">문장 퍼즐에 사용할 수 있는 단어카드를 얻었습니다.</div>
+        <div style="margin-top:10px;">
+          <button class="btn" id="cardPopupCloseBtn">확인</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 퍼즐 씬 ===== -->
+    <section id="scene-puzzle" class="scene hidden">
+      <div class="puzzle-layout">
+        <div class="puzzle-sentence">
+          <div style="font-size:12px; opacity:0.75; margin-bottom:6px;">
+            기억 조각을 끌어다 문장을 완성하세요.
+          </div>
+          <div style="margin-top:4px;">
+            나는
+            <span class="slot" data-slot="slot1"></span>
+            을 다루고,
+            <span class="slot" data-slot="slot2"></span>
+            을 만들며,
+            <span class="slot" data-slot="slot3"></span>
+            를 남기던 존재.
+          </div>
+        </div>
+        <div class="puzzle-sidebar">
+          <div style="font-size:12px; opacity:0.85; margin-bottom:2px;">사용할 단어 카드</div>
+          <div id="puzzleCards">
+            <div class="draggable-card" draggable="true" id="card-magic" data-word="마법">
+              마&nbsp;&nbsp;법
+            </div>
+            <div class="draggable-card" draggable="true" id="card-drug" data-word="약물">
+              약&nbsp;&nbsp;물
+            </div>
+            <div class="draggable-card" draggable="true" id="card-scent" data-word="향기">
+              향&nbsp;&nbsp;기
+            </div>
+          </div>
+          <div class="puzzle-message" id="puzzleMessage">
+            카드를 끌어 슬롯 위에 올리면 단서가 맞춰집니다.
+          </div>
+          <button class="btn" id="puzzleGiveUpBtn">배치를 초기화한다</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 엔딩 씬 ===== -->
+    <!-- 여기 중요: class="scene hidden" (원인 1 수정) -->
+    <section id="scene-ending" class="scene hidden">
+      <div class="character-area">
+        <img id="luaEnding" class="lua-img" src="lua_smile.png" alt="루아 엔딩" />
+      </div>
+      <div class="ending-text">
+        <div>
+          <span class="ending-highlight">“맞아요…”</span><br>
+          “나는 <span class="ending-highlight">마법</span>을 다루고,<br>
+          <span class="ending-highlight">약</span>을 만들고,<br>
+          <span class="ending-highlight">향기</span>를 남기던…<br>
+          <span class="ending-highlight">마녀였어요.</span>”
+        </div>
+        <div>
+          ??의 주변이 잠시 눈부시게 빛난 뒤, 다시 어둠이 내려앉는다.<br>
+          그녀의 눈동자만이 촛불보다 더 깊은 빛을 품고 있다.
+        </div>
+        <div>
+          “하지만… 왜 혼자였는지…<br>
+          누구를 기다렸는지… 아무리 해도 기억나지 않아요.”
+        </div>
+        <div class="tagline">
+          다음 챕터 목표 — <b>“나는 왜 여기에?”</b>
+        </div>
+        <div style="margin-top:10px; display:flex; justify-content:center; gap:8px;">
+          <button class="btn" onclick="alert('여기서 메인화면 로딩으로 연결됩니다.')">
+            메인화면으로
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  // ===== 상태 관리 =====
+  const state = {
+    scene: "intro",
+    cards: { magic: false, drug: false, scent: false },
+    placed: { slot1: null, slot2: null, slot3: null },
+    puzzleLocked: false
+  };
+
+  const sceneIntro   = document.getElementById("scene-intro");
+  const sceneExplore = document.getElementById("scene-explore");
+  const scenePuzzle  = document.getElementById("scene-puzzle");
+  const sceneEnding  = document.getElementById("scene-ending");
+
+  const introNextBtn = document.getElementById("introNextBtn");
+  const introSkipBtn = document.getElementById("introSkipBtn");
+  const phaseLabel   = document.getElementById("phaseLabel");
+
+  const introSpeaker = document.getElementById("introSpeaker");
+  const introText    = document.getElementById("introText");
+  const choiceContainer = document.getElementById("choiceContainer");
+  const choiceButtons = choiceContainer.querySelectorAll(".choice-btn");
+
+  const logBox          = document.getElementById("logBox");
+  const logToggleBtn    = document.getElementById("logToggleBtn");
+  const inventoryCards  = document.getElementById("inventoryCards");
+  const inventoryCount  = document.getElementById("inventoryCount");
+  const toPuzzleBtn     = document.getElementById("toPuzzleBtn");
+
+  const cardPopup       = document.getElementById("cardPopup");
+  const cardPopupName   = document.getElementById("cardPopupName");
+  const cardPopupWord   = document.getElementById("cardPopupWord");
+  const cardPopupCloseBtn = document.getElementById("cardPopupCloseBtn");
+
+  const exploreDialogue = document.getElementById("exploreDialogue");
+  const memoryFlare     = document.getElementById("memoryFlare");
+
+  const luaMain         = document.getElementById("luaMain");
+
+  const puzzleMessage   = document.getElementById("puzzleMessage");
+  const puzzleGiveUpBtn = document.getElementById("puzzleGiveUpBtn");
+
+  const scenes = [sceneIntro, sceneExplore, scenePuzzle, sceneEnding];
+
+  function setPhase(phaseText) {
+    phaseLabel.textContent = "PHASE : " + phaseText;
+  }
+
+  function showScene(targetScene, phaseText) {
+    scenes.forEach(s => s.classList.add("hidden"));
+    targetScene.classList.remove("hidden");
+    if (phaseText) setPhase(phaseText);
+  }
+
+  function addLog(text) {
+    const div = document.createElement("div");
+    div.className = "log-entry";
+    div.textContent = text;
+    logBox.appendChild(div);
+    logBox.scrollTop = logBox.scrollHeight;
+  }
+
+  // ===== 오프닝 스크립트 =====
+  const introScript = [
+    {speaker: "나레이션",
+      face: "neutral",
+      text: "…어두운 작업실, 흔들리는 촛불.<br>의자에 앉아 있던 소녀가 멍하니 눈을 떠 당신을 바라본다."
+    },
+    { 
+      speaker: "??",
+      face: "neutral",
+      text: "“...누구...세요?”"
+    },
+    {
+      speaker: "??",
+      face: "think",
+      text: "“여기는… 어디죠…?<br>그리고… 당신은 누구신가요?”"
+    },
+    {
+      speaker: "플레이어",
+      face: null,
+      text: "“난… 잠깐만, 나도 여기가 어디인지 모르겠어요.”"
+    },
+    {
+      speaker: "나레이션",
+      face: "think",
+      text: "눈 앞의 사람과 당신 주변을 둘러본다.<br>약병, 마법도구, 말린 꽃… 낯설고 친숙한 것들이 뒤섞여 있다."
+    },
+    {
+      speaker: "??",
+      face: "think",
+      text: "“저는… 저는 누구일까요?”<br>(손을 바라보며)"
+    },
+
+    {
+      speaker: "??",
+      face: "think",
+      text: "“손끝에… 이상한 힘이 남아 있어요.<br>하지만… 아무것도 기억나지 않아요.”"
+    },
+
+    {
+      type: "choice",
+      speaker: "플레이어",
+      face: null,
+      text: "뭐라고 대답할까?"
+    },
+    {
+      speaker: "??",
+      face: "neutral",
+      text: "마녀는 한 걸음 다가온다.<br>눈빛에는 두려움과 기대가 함께 섞여 있다.<br><br>“부탁이에요.<br>저를… 잊지 않게 도와주세요.”"
+    },
+    {
+      speaker: "플레이어",
+      face: null,
+      text: "“같이 기억을 찾아보죠.”"
+    },
+    {
+      speaker: "나레이션",
+      face: "think",
+      text: "카메라는 천천히 물러나 어두운 작업실 전경을 비춘다."
+    },
+    {
+      speaker: "??",
+      face: "think",
+      text: "“이 방에 있는 모든 것이 저에 대해 무언가 말해줄 거예요…<br><br>하지만 저는…그걸 혼자서 볼 용기가 없어요.”"
+    },
+    {
+      speaker: "플레이어",
+      face: null,
+      text: "“첫 단서부터 찾아볼까요?”"
+    },
+    {
+      speaker: "??",
+      face: "smile",
+      text: "“부탁해요.저를 도와주세요”"
+    }
+  ];
+
+  let introStep = 0;
+
+  function setLuaFace(face) {
+    if (!face) return;
+    const file =
+      face === "neutral" ? "lua_neutral.png" :
+      face === "think"   ? "lua_think.png"   :
+      face === "smile"   ? "lua_smile.png"   :
+      "lua_neutral.png";
+    luaMain.src = file;
+  }
+
+  function renderIntro() {
+    const step = introScript[introStep];
+    if (!step) return;
+
+    introSpeaker.textContent = step.speaker || " ";
+    introText.innerHTML = step.text || "";
+
+    if (step.face) setLuaFace(step.face);
+
+    if (step.type === "choice") {
+      choiceContainer.classList.remove("hidden");
+      introNextBtn.disabled = true;
+    } else {
+      choiceContainer.classList.add("hidden");
+      introNextBtn.disabled = false;
+
+      if (introStep === introScript.length - 1) {
+        introNextBtn.textContent = "주위를 둘러본다";
+      } else {
+        introNextBtn.textContent = "다음";
+      }
+    }
+  }
+
+  function advanceIntro() {
+    const lastIndex = introScript.length - 1;
+
+    if (introStep >= lastIndex) {
+      state.scene = "explore";
+      showScene(sceneExplore, "탐색");
+      setLuaFace("think");
+      return;
+    }
+
+    introStep++;
+    renderIntro();
+  }
+
+  choiceButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.choice;
+      let line = "";
+
+      if (key === "help") {
+        line = "“기억을 되찾을 수 있게 도와줄게.”";
+      } else {
+        line = "“천천히 알아가면 되죠.”";
+      }
+
+      introSpeaker.textContent = "플레이어";
+      introText.innerHTML = line;
+      choiceContainer.classList.add("hidden");
+      introNextBtn.disabled = false;
+
+      introStep = introScript.findIndex(s => s.type === "choice") + 1;
+    });
+  });
+
+  // ===== 카드 획득 처리 =====
+  function gainCard(type, btn) {
+    if (state.cards[type]) {
+      addLog("이미 확인한 물건이다.");
+      return;
+    }
+
+    state.cards[type] = true;
+
+    let word = "";
+    let logText = "";
+    let dialogue = "";
+
+    if (type === "magic") {
+      word = "마법";
+      logText = "책장에서 빛바랜 주문서를 발견했다. 여러 번 다뤄본 손때가 느껴진다.";
+      dialogue = "“이건… 주문서 같아요. 제가… 이걸 다뤄왔던 걸까요…?”";
+    } else if (type === "drug") {
+      word = "약물";
+      logText = "책상 위 비커와 조제도구에는 마른 약물 찌꺼기가 남아 있다.";
+      dialogue = "“약을 만들었어요… 치료를 위한 거였을까요, 아니면… 독이었을까요?”";
+    } else if (type === "scent") {
+      word = "향기";
+      logText = "선반에는 말린 꽃과 향료 병들이 가지런히 놓여 있다. 익숙한 향이다.";
+      dialogue = "“이 향… 누군가를 떠올리게 하는데… 그게 누구였는지가 기억이 안 나요.”";
+      // 노란 이펙트는 CSS에서 완전히 끔
+    }
+
+    addLog(logText);
+    exploreDialogue.textContent = dialogue;
+
+    const card = document.createElement("div");
+    card.className = "card-small";
+    card.textContent = word;
+    inventoryCards.appendChild(card);
+
+    if (btn) {
+      btn.classList.add("visited");
+      btn.disabled = true;
+    }
+
+    cardPopupName.textContent = "기억 조각 획득";
+    cardPopupWord.textContent = word;
+    cardPopup.classList.add("show");
+
+    const count = Object.values(state.cards).filter(Boolean).length;
+    inventoryCount.textContent = count + " / 3";
+
+    if (count === 3) {
+      toPuzzleBtn.disabled = false;
+      exploreDialogue.textContent = "“세 가지 단서가 모였어요… 이제 제 정체를 맞춰볼 수 있을까요?”";
+    }
+  }
+
+  // ===== Drag & Drop 퍼즐 =====
+  const slots = document.querySelectorAll(".slot");
+  const draggableCards = document.querySelectorAll(".draggable-card");
+  const correctMapping = {
+    slot1: "card-magic",
+    slot2: "card-drug",
+    slot3: "card-scent"
+  };
+
+  draggableCards.forEach(card => {
+    card.addEventListener("dragstart", (e) => {
+      if (state.puzzleLocked) {
+        e.preventDefault();
+        return;
+      }
+      e.dataTransfer.setData("text/plain", card.id);
+      card.classList.add("dragging");
+    });
+    card.addEventListener("dragend", () => {
+      card.classList.remove("dragging");
+    });
+  });
+
+  slots.forEach(slot => {
+    slot.addEventListener("dragover", (e) => {
+      if (state.puzzleLocked) return;
+      e.preventDefault();
+      slot.classList.add("active");
+    });
+    slot.addEventListener("dragleave", () => {
+      slot.classList.remove("active");
+    });
+    slot.addEventListener("drop", (e) => {
+      if (state.puzzleLocked) return;
+      e.preventDefault();
+      slot.classList.remove("active");
+
+      const cardId = e.dataTransfer.getData("text/plain");
+      const card = document.getElementById(cardId);
+      if (!card) return;
+
+      for (let key in state.placed) {
+        if (state.placed[key] === cardId) {
+          state.placed[key] = null;
+        }
+      }
+
+      const slotKey = slot.dataset.slot;
+      state.placed[slotKey] = cardId;
+
+      slot.textContent = card.dataset.word || "";
+      slot.classList.remove("correct");
+
+      checkPuzzle();
+    });
+  });
+
+  function checkPuzzle() {
+    let allPlaced = true;
+    let allCorrect = true;
+
+    for (let slotKey in state.placed) {
+      const cardId = state.placed[slotKey];
+      const slot = document.querySelector(`.slot[data-slot="${slotKey}"]`);
+      if (!cardId) {
+        allPlaced = false;
+        allCorrect = false;
+        slot.classList.remove("correct");
+        continue;
+      }
+      if (correctMapping[slotKey] === cardId) {
+        slot.classList.add("correct");
+      } else {
+        allCorrect = false;
+        slot.classList.remove("correct");
+      }
+    }
+
+    if (!allPlaced) {
+      puzzleMessage.textContent = "아직 빈 슬롯이 있다. 세 가지 기억을 모두 채워야 한다.";
+      return;
+    }
+
+    if (allCorrect) {
+      puzzleMessage.textContent = "모든 조각이 맞아 떨어지는 순간, 작업실이 빛으로 가득 찬다.";
+      triggerMemorySequence();
+    } else {
+      puzzleMessage.textContent = "뭔가 어색하다. 기억의 순서를 다시 떠올려 보자.";
+    }
+  }
+
+  // ===== 기억 연출 & 엔딩 =====
+  let memoryTriggered = false;
+  function triggerMemorySequence() {
+    if (memoryTriggered) return;
+    memoryTriggered = true;
+    state.puzzleLocked = true;
+
+    memoryFlare.classList.add("on");
+
+    draggableCards.forEach(c => c.classList.add("disabled"));
+
+    setTimeout(() => {
+      showScene(sceneEnding, "엔딩");
+    }, 1400);
+  }
+
+  // ===== 이벤트 바인딩 =====
+  introNextBtn.addEventListener("click", advanceIntro);
+
+  introSkipBtn.addEventListener("click", () => {
+    state.scene = "explore";
+    showScene(sceneExplore, "탐색");
+    setLuaFace("think");
+    addLog("플레이어는 도입을 건너뛰고 바로 작업실을 둘러보기로 했다.");
+  });
+
+  document.querySelectorAll(".object-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const type = btn.dataset.type;
+      gainCard(type, btn);
+    });
+  });
+
+  cardPopupCloseBtn.addEventListener("click", () => {
+    cardPopup.classList.remove("show");
+  });
+
+  let logOpen = true;
+  logToggleBtn.addEventListener("click", () => {
+    logOpen = !logOpen;
+    logBox.classList.toggle("closed", !logOpen);
+    logToggleBtn.textContent = logOpen ? "로그 접기" : "로그 펼치기";
+  });
+
+  toPuzzleBtn.addEventListener("click", () => {
+    state.scene = "puzzle";
+    showScene(scenePuzzle, "퍼즐");
+  });
+
+  puzzleGiveUpBtn.addEventListener("click", () => {
+    if (state.puzzleLocked) return;
+    for (let key in state.placed) {
+      state.placed[key] = null;
+    }
+    slots.forEach(slot => {
+      slot.textContent = "";
+      slot.classList.remove("correct");
+    });
+    puzzleMessage.textContent = "카드를 다시 배치해 보자. 마녀였던 자신을 떠올리며.";
+  });
+
+  // 초기화
+  setPhase("도입");
+  renderIntro();
+</script>
+</body>
+</html>
